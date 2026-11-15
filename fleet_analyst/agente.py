@@ -131,7 +131,12 @@ class AgenteFrota:
         for tentativa in (1, 2):
             resp.tentativas = tentativa
             try:
-                saida = _extrair_json(self.llm(PROMPT_SQL, mensagem))
+                bruto = self.llm(PROMPT_SQL, mensagem)
+            except Exception as e:  # chave inválida, sem saldo, fora do ar, limite de uso...
+                resp.erro = f"Não consegui falar com o modelo de IA agora ({type(e).__name__}). Tente de novo em instantes."
+                break
+            try:
+                saida = _extrair_json(bruto)
             except (ValueError, json.JSONDecodeError) as e:
                 resp.erro = f"Resposta do modelo em formato inesperado: {e}"
                 continue

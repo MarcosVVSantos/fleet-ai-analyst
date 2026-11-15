@@ -65,3 +65,11 @@ def test_comparacao_aceita_formatos_de_mes():
     esperado = pd.DataFrame({"mes": pd.to_datetime(["2026-05-01", "2026-06-01"]), "n": [3, 4]})
     obtido = pd.DataFrame({"mes": ["2026-05", "2026-06"], "n": [3, 4]})
     assert resultados_equivalentes(obtido, esperado)
+
+
+def test_falha_da_api_vira_mensagem_amigavel(base):
+    def llm(s, u):
+        raise RuntimeError("401 chave inválida")
+
+    r = AgenteFrota(llm, base, gerar_resumo=False).perguntar("qualquer coisa")
+    assert r.dados is None and "Não consegui falar com o modelo" in r.erro
