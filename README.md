@@ -2,7 +2,7 @@
 
 **Pergunte em português sobre a operação de uma frota e receba a resposta com SQL, tabela e gráfico.**
 
-> 🔗 **Demo online:** _(link do Streamlit aqui)_ · Todos os dados são fictícios.
+> 🔗 **Demo online: [fleet-ai-analyst-marcos.streamlit.app](https://fleet-ai-analyst-marcos.streamlit.app)** · Todos os dados são fictícios.
 
 <!-- Grave um GIF de 20–40 s usando o app, salve em docs/demo.gif e troque esta linha por: ![Demonstração](docs/demo.gif) -->
 
