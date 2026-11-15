@@ -57,3 +57,11 @@ def test_comparacao_ignora_nomes_e_ordem_de_colunas():
     obtido = pd.DataFrame({"total": [1, 3], "nome_filial": ["b", "a"], "extra": [0, 0]})
     assert resultados_equivalentes(obtido, esperado)
     assert not resultados_equivalentes(obtido.head(1), esperado)
+
+
+def test_comparacao_aceita_formatos_de_mes():
+    import pandas as pd
+
+    esperado = pd.DataFrame({"mes": pd.to_datetime(["2026-05-01", "2026-06-01"]), "n": [3, 4]})
+    obtido = pd.DataFrame({"mes": ["2026-05", "2026-06"], "n": [3, 4]})
+    assert resultados_equivalentes(obtido, esperado)

@@ -35,11 +35,13 @@ contratos(contrato_id INT, veiculo_id INT, filial_id INT, cliente_id INT, plano 
     -- plano: 'Semanal', 'Mensal', 'Compra programada'; status: 'ativo', 'encerrado', 'inadimplente'; data_fim NULL se ativo
 cobrancas(cobranca_id INT, contrato_id INT, vencimento DATE, valor DOUBLE, data_pagamento DATE)
     -- uma cobrança por semana; data_pagamento NULL = não paga; pago em atraso se data_pagamento > vencimento
+    -- vencida = vencimento < data de referência (uma cobrança que vence hoje ainda não está vencida)
 recolhimentos(recolhimento_id INT, veiculo_id INT, contrato_id INT, filial_id INT, parceiro_id INT,
               motivo TEXT, data_solicitacao DATE, data_conclusao DATE, prazo_dias INT,
               distancia_km DOUBLE, custo DOUBLE, status TEXT)
     -- motivo: 'inadimplência', 'contrato encerrado sem devolução', 'sinistro'
     -- status: 'concluído', 'em andamento', 'cancelado'; parceiro_id NULL = feito pela equipe própria
+    -- custo = custo realizado em R$, preenchido só quando concluído (NULL se em andamento ou cancelado)
 vw_recolhimentos = recolhimentos + colunas calculadas:
     dias_em_aberto INT  -- dias entre a solicitação e a conclusão (ou até hoje, se não concluído)
     atrasado BOOL       -- passou do prazo_dias (cancelados nunca contam como atrasados)

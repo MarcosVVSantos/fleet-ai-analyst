@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -15,11 +17,16 @@ def carregar_perguntas(caminho: Path = ARQUIVO_PERGUNTAS) -> list[dict]:
     return yaml.safe_load(caminho.read_text(encoding="utf-8"))
 
 
+_MES = re.compile(r"^(\d{4})-(\d{2})(-01)?( 00:00:00)?$")
+
+
 def _normalizar(valor) -> str:
     if valor is None or (isinstance(valor, float) and pd.isna(valor)):
         return "∅"
-    if isinstance(valor, pd.Timestamp):
-        return valor.strftime("%Y-%m-%d")
+    if isinstance(valor, (pd.Timestamp, date)):
+        valor = valor.strftime("%Y-%m-%d")
+    if isinstance(valor, str) and (m := _MES.match(valor.strip())):
+        return f"{m.group(1)}-{m.group(2)}"  # 2026-05, 2026-05-01 e 2026-05-01 00:00:00 = maio/2026
     if isinstance(valor, bool):
         return str(valor)
     if isinstance(valor, (int, float)):

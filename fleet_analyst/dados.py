@@ -133,6 +133,8 @@ def gerar_tabelas() -> dict[str, pd.DataFrame]:
                         status, conclusao = "em andamento", None
                     else:
                         status = "concluído"
+                    if status != "concluído":
+                        custo = None  # custo realizado só existe depois da conclusão
                     recolhimentos.append({
                         "recolhimento_id": rid, "veiculo_id": vid, "contrato_id": cid, "filial_id": fid,
                         "parceiro_id": parceiro, "motivo": motivo, "data_solicitacao": solicitacao,
