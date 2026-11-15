@@ -6,3 +6,4 @@ sqlglot>=25
 openai>=1.50
 pyyaml>=6
 pytest>=8
+tabulate>=0.9

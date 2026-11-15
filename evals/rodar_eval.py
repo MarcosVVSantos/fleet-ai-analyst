@@ -48,7 +48,11 @@ def avaliar(modelo: str, perguntas: list[dict]) -> list[dict]:
         r = agente.perguntar(p["pergunta"])
         acertou = r.dados is not None and resultados_equivalentes(r.dados, esperado)
         linhas.append({"id": p["id"], "pergunta": p["pergunta"], "acertou": acertou,
-                       "segundos": r.segundos, "tentativas": r.tentativas, "erro": r.erro or ""})
+                       "segundos": r.segundos, "tentativas": r.tentativas, "erro": r.erro or "",
+                       "sql_gerado": r.sql or "", "sql_referencia": p["sql"].strip(),
+                       "obtido": r.dados.head(5).to_markdown(index=False) if r.dados is not None else "",
+                       "obtido_linhas": 0 if r.dados is None else len(r.dados),
+                       "esperado": esperado.head(5).to_markdown(index=False), "esperado_linhas": len(esperado)})
         print(f"[{modelo}] {p['id']:>2} {'✅' if acertou else '❌'} {r.segundos:>5.1f}s  {p['pergunta']}")
     return linhas
 
@@ -74,6 +78,20 @@ def main() -> None:
     for i, p in enumerate(perguntas):
         marcas = " | ".join("✅" if resultados[m][i]["acertou"] else "❌" for m in modelos)
         md.append(f"| {p['id']} | {p['pergunta']} | {marcas} |")
+    # Detalhe dos erros: é o que mostra se o problema está no agente, na pergunta ou no eval
+    for m, linhas in resultados.items():
+        erros = [l for l in linhas if not l["acertou"]]
+        det = [f"# Erros do eval: {m}", ""]
+        for l in erros:
+            det += [f"## {l['id']}. {l['pergunta']}", "",
+                    f"Erro: {l['erro'] or '-'} · Tentativas: {l['tentativas']}", "",
+                    "**SQL gerado**", "```sql", l["sql_gerado"], "```",
+                    f"**Resultado obtido** ({l['obtido_linhas']} linhas, 5 primeiras)", "", l["obtido"], "",
+                    "**SQL de referência**", "```sql", l["sql_referencia"], "```",
+                    f"**Resultado esperado** ({l['esperado_linhas']} linhas, 5 primeiras)", "", l["esperado"], ""]
+        nome = "".join(c if c.isalnum() else "_" for c in m)
+        (RAIZ / "evals" / f"erros_{nome}.md").write_text("\n".join(det), encoding="utf-8")
+
     destino = RAIZ / "evals" / "resultados.md"
     destino.write_text("\n".join(md) + "\n", encoding="utf-8")
     print(f"\nRelatório salvo em {destino.relative_to(RAIZ)}")
