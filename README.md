@@ -60,11 +60,21 @@ python -m evals.rodar_eval                          # avalia o modelo configurad
 python -m evals.rodar_eval deepseek-chat outro-modelo   # compara dois modelos
 ```
 
-O relatório sai em [`evals/resultados.md`](evals/resultados.md): acertos, tempo médio e quantas perguntas precisaram de autocorreção.
+O relatório sai em [`evals/resultados.md`](evals/resultados.md): acertos, tempo médio e quantas perguntas precisaram de autocorreção. Para cada erro, `evals/erros_<modelo>.md` mostra o SQL gerado ao lado do de referência.
 
-| Modelo | Acertos | Tempo médio |
+| Modelo | Acertos | Tempo médio por pergunta |
 |---|---|---|
-| _(rodar o eval e preencher)_ | | |
+| DeepSeek V3 (`deepseek-chat`) | **20/20** | 1,5 s |
+
+### O que o eval me ensinou
+
+A primeira rodada deu **11/20 (55%)**. Antes de mexer no prompt, li o SQL de cada erro e encontrei três causas, **nenhuma delas um SQL errado do modelo**:
+
+1. **O avaliador era rígido demais.** O modelo escreveu o mês como `2026-05` e a referência como `2026-05-01`. Era a mesma resposta, então o comparador passou a aceitar os dois formatos.
+2. **As regras de negócio eram ambíguas.** Recolhimento cancelado tem custo? Cobrança que vence hoje já está "vencida"? Cada leitura razoável dava um número diferente. As definições foram documentadas no esquema que o LLM lê, que é o mesmo que um analista novo precisaria saber.
+3. **Uma pergunta estava mal escrita.** "Percentual de cobranças pagas com atraso" não dizia sobre qual total. A pergunta foi reescrita.
+
+Depois disso: **16/20**, e então **20/20**. Os 4 erros intermediários vieram de uma base local desatualizada, que agora tem versão e é recriada sozinha quando a regra de geração muda. Também apareceu uma oscilação: a mesma pergunta sobre inadimplência acertou numa rodada e errou na outra, o que mostra que o modelo nem sempre responde igual. Por isso, o próximo passo é rodar o eval várias vezes e reportar a faixa de acerto, não um número só.
 
 ## Como rodar
 
@@ -75,7 +85,7 @@ python -m venv .venv && source .venv/bin/activate   # no Windows: .venv\Scripts\
 pip install -r requirements.txt
 cp .env.example .env        # e coloque sua chave de API
 streamlit run app.py        # a base fictícia é gerada na primeira execução
-pytest                      # 21 testes: segurança, fluxo do agente e base
+pytest                      # 22 testes: segurança, fluxo do agente, base e comparador do eval
 ```
 
 Sem chave no `.env`, o app abre em modo demonstração.
@@ -83,6 +93,7 @@ Sem chave no `.env`, o app abre em modo demonstração.
 ## Próximos passos
 
 - Memória de conversa ("e em setembro?" depois de uma pergunta sobre outubro).
+- Rodar o eval 5 vezes por modelo e reportar a faixa de acerto; comparar com um segundo modelo.
 - Mais perguntas difíceis no eval (comparações entre períodos, perguntas ambíguas).
 - Registrar o custo de cada pergunta (tokens) no relatório do eval.
 
