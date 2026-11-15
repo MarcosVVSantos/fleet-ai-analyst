@@ -1,0 +1,143 @@
+# Conjunto de avaliação do agente: pergunta em português + SQL de referência escrito à mão.
+# O eval roda a pergunta no agente e compara o RESULTADO (não o texto do SQL) com o da referência.
+# As 6 primeiras também aparecem como exemplos clicáveis no app.
+
+- id: 1
+  pergunta: Quais são as 5 filiais com mais recolhimentos atrasados?
+  sql: |
+    SELECT f.nome AS filial, count(*) AS recolhimentos_atrasados
+    FROM vw_recolhimentos r JOIN filiais f USING (filial_id)
+    WHERE r.atrasado
+    GROUP BY f.nome ORDER BY recolhimentos_atrasados DESC LIMIT 5
+
+- id: 2
+  pergunta: Qual o percentual de recolhimentos atrasados em cada filial?
+  sql: |
+    SELECT f.nome AS filial, round(100.0 * count(*) FILTER (WHERE r.atrasado) / count(*), 1) AS pct_atrasados
+    FROM vw_recolhimentos r JOIN filiais f USING (filial_id)
+    GROUP BY f.nome ORDER BY pct_atrasados DESC
+
+- id: 3
+  pergunta: Equipe própria ou parceiro, quem conclui recolhimentos mais rápido em média?
+  sql: |
+    SELECT responsavel, round(avg(dias_em_aberto), 1) AS dias_medios
+    FROM vw_recolhimentos WHERE status = 'concluído'
+    GROUP BY responsavel ORDER BY dias_medios
+
+- id: 4
+  pergunta: Qual o custo total de recolhimentos por mês de solicitação?
+  sql: |
+    SELECT date_trunc('month', data_solicitacao) AS mes, round(sum(custo), 2) AS custo_total
+    FROM recolhimentos WHERE status <> 'cancelado'
+    GROUP BY mes ORDER BY mes
+
+- id: 5
+  pergunta: Qual a taxa de inadimplência dos contratos por região?
+  sql: |
+    SELECT f.regiao, round(100.0 * count(*) FILTER (WHERE c.status = 'inadimplente') / count(*), 1) AS taxa_inadimplencia
+    FROM contratos c JOIN filiais f USING (filial_id)
+    GROUP BY f.regiao ORDER BY taxa_inadimplencia DESC
+
+- id: 6
+  pergunta: Quais recolhimentos estão em andamento hoje e há quantos dias estão abertos?
+  sql: |
+    SELECT r.recolhimento_id, f.nome AS filial, r.responsavel, r.dias_em_aberto
+    FROM vw_recolhimentos r JOIN filiais f USING (filial_id)
+    WHERE r.status = 'em andamento'
+    ORDER BY r.dias_em_aberto DESC
+
+- id: 7
+  pergunta: Quantos veículos existem em cada status?
+  sql: |
+    SELECT status, count(*) AS veiculos FROM veiculos GROUP BY status ORDER BY veiculos DESC
+
+- id: 8
+  pergunta: Qual o custo médio de um recolhimento feito pela equipe própria e por parceiro?
+  sql: |
+    SELECT responsavel, round(avg(custo), 2) AS custo_medio
+    FROM vw_recolhimentos WHERE status <> 'cancelado'
+    GROUP BY responsavel
+
+- id: 9
+  pergunta: Quais são os 3 parceiros com maior tempo médio para concluir recolhimentos?
+  sql: |
+    SELECT p.nome AS parceiro, round(avg(r.dias_em_aberto), 1) AS dias_medios
+    FROM vw_recolhimentos r JOIN parceiros p USING (parceiro_id)
+    WHERE r.status = 'concluído'
+    GROUP BY p.nome ORDER BY dias_medios DESC LIMIT 3
+
+- id: 10
+  pergunta: Quantos contratos ativos existem em cada plano?
+  sql: |
+    SELECT plano, count(*) AS contratos_ativos FROM contratos WHERE status = 'ativo'
+    GROUP BY plano ORDER BY contratos_ativos DESC
+
+- id: 11
+  pergunta: Quantos recolhimentos houve por motivo?
+  sql: |
+    SELECT motivo, count(*) AS recolhimentos FROM recolhimentos GROUP BY motivo ORDER BY recolhimentos DESC
+
+- id: 12
+  pergunta: Qual o valor total de cobranças vencidas e não pagas em cada filial?
+  sql: |
+    SELECT f.nome AS filial, round(sum(cb.valor), 2) AS valor_em_aberto
+    FROM cobrancas cb JOIN contratos c USING (contrato_id) JOIN filiais f ON f.filial_id = c.filial_id
+    WHERE cb.data_pagamento IS NULL AND cb.vencimento <= DATE '2026-10-31'
+    GROUP BY f.nome ORDER BY valor_em_aberto DESC
+
+- id: 13
+  pergunta: Quantos recolhimentos foram solicitados em cada mês?
+  sql: |
+    SELECT date_trunc('month', data_solicitacao) AS mes, count(*) AS recolhimentos
+    FROM recolhimentos GROUP BY mes ORDER BY mes
+
+- id: 14
+  pergunta: Quais as 3 filiais com mais motos em manutenção?
+  sql: |
+    SELECT f.nome AS filial, count(*) AS motos_em_manutencao
+    FROM veiculos v JOIN filiais f USING (filial_id)
+    WHERE v.status = 'manutenção'
+    GROUP BY f.nome ORDER BY motos_em_manutencao DESC, filial LIMIT 3
+
+- id: 15
+  pergunta: Qual o percentual de cobranças pagas com atraso em cada região?
+  sql: |
+    SELECT f.regiao,
+           round(100.0 * count(*) FILTER (WHERE cb.data_pagamento > cb.vencimento) / count(*) FILTER (WHERE cb.data_pagamento IS NOT NULL), 1) AS pct_pagas_com_atraso
+    FROM cobrancas cb JOIN contratos c USING (contrato_id) JOIN filiais f ON f.filial_id = c.filial_id
+    GROUP BY f.regiao ORDER BY pct_pagas_com_atraso DESC
+
+- id: 16
+  pergunta: Qual o custo médio dos recolhimentos acima de 45 km comparado aos de até 45 km?
+  sql: |
+    SELECT CASE WHEN distancia_km > 45 THEN 'acima de 45 km' ELSE 'até 45 km' END AS faixa,
+           round(avg(custo), 2) AS custo_medio
+    FROM recolhimentos WHERE status <> 'cancelado'
+    GROUP BY faixa ORDER BY faixa
+
+- id: 17
+  pergunta: Quantos parceiros inativos existem em cada UF?
+  sql: |
+    SELECT uf, count(*) AS parceiros_inativos FROM parceiros WHERE NOT ativo GROUP BY uf ORDER BY uf
+
+- id: 18
+  pergunta: Qual o tamanho da frota em cada região?
+  sql: |
+    SELECT f.regiao, count(*) AS veiculos
+    FROM veiculos v JOIN filiais f USING (filial_id)
+    GROUP BY f.regiao ORDER BY veiculos DESC
+
+- id: 19
+  pergunta: Como evoluiu o tempo médio de conclusão dos recolhimentos mês a mês?
+  sql: |
+    SELECT date_trunc('month', data_solicitacao) AS mes, round(avg(dias_em_aberto), 1) AS dias_medios
+    FROM vw_recolhimentos WHERE status = 'concluído'
+    GROUP BY mes ORDER BY mes
+
+- id: 20
+  pergunta: Quais as 5 filiais com maior receita semanal em contratos ativos?
+  sql: |
+    SELECT f.nome AS filial, round(sum(c.valor_semanal), 2) AS receita_semanal
+    FROM contratos c JOIN filiais f USING (filial_id)
+    WHERE c.status = 'ativo'
+    GROUP BY f.nome ORDER BY receita_semanal DESC LIMIT 5
