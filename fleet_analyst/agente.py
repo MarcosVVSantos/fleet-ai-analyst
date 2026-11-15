@@ -20,7 +20,7 @@ from typing import Callable, Protocol
 import duckdb
 import pandas as pd
 
-from .dados import DATA_REFERENCIA, criar_base
+from .dados import CAMINHO_BASE, DATA_REFERENCIA, criar_base
 from .seguranca import SQLRecusado, validar_sql
 
 ESQUEMA = f"""
@@ -33,6 +33,7 @@ veiculos(veiculo_id INT, placa TEXT, modelo TEXT, ano INT, filial_id INT, status
 contratos(contrato_id INT, veiculo_id INT, filial_id INT, cliente_id INT, plano TEXT, valor_semanal DOUBLE,
           data_inicio DATE, data_fim DATE, status TEXT)
     -- plano: 'Semanal', 'Mensal', 'Compra programada'; status: 'ativo', 'encerrado', 'inadimplente'; data_fim NULL se ativo
+    -- 'inadimplente' = contrato encerrado por falta de pagamento (a moto foi para recolhimento)
 cobrancas(cobranca_id INT, contrato_id INT, vencimento DATE, valor DOUBLE, data_pagamento DATE)
     -- uma cobrança por semana; data_pagamento NULL = não paga; pago em atraso se data_pagamento > vencimento
     -- vencida = vencimento < data de referência (uma cobrança que vence hoje ainda não está vencida)
@@ -110,7 +111,7 @@ def _extrair_json(texto: str) -> dict:
 
 
 class AgenteFrota:
-    def __init__(self, llm: ClienteLLM, caminho_base: str | Path = "data/frota.duckdb", gerar_resumo: bool = True):
+    def __init__(self, llm: ClienteLLM, caminho_base: str | Path = CAMINHO_BASE, gerar_resumo: bool = True):
         caminho_base = Path(caminho_base)
         if not caminho_base.exists():
             criar_base(caminho_base)

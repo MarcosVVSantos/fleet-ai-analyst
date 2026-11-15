@@ -15,6 +15,9 @@ import pandas as pd
 DATA_REFERENCIA = date(2026, 10, 31)  # "hoje" dentro da base fictícia
 INICIO = date(2026, 1, 1)
 SEMENTE = 42
+# Suba a versão sempre que a regra de geração mudar: o arquivo antigo é ignorado e a base é recriada
+VERSAO_BASE = 2
+CAMINHO_BASE = Path(__file__).resolve().parent.parent / "data" / f"frota_v{VERSAO_BASE}.duckdb"
 
 FILIAIS = [
     # id, nome, cidade, uf, regiao, risco (inadimplência), eficiência (velocidade de recolhimento)
@@ -211,7 +214,7 @@ def criar_base(caminho: str | Path) -> Path:
 
 
 if __name__ == "__main__":
-    destino = criar_base("data/frota.duckdb")
+    destino = criar_base(CAMINHO_BASE)
     con = duckdb.connect(str(destino), read_only=True)
     for (t,) in con.execute("SELECT table_name FROM information_schema.tables ORDER BY 1").fetchall():
         print(t, con.execute(f"SELECT count(*) FROM {t}").fetchone()[0])

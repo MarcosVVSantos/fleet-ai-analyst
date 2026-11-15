@@ -28,8 +28,8 @@ def carregar_agente() -> tuple[AgenteFrota, bool]:
     chave = _segredo("LLM_API_KEY")
     if chave:
         llm = cliente_openai(chave, _segredo("LLM_BASE_URL", "https://api.deepseek.com"), _segredo("LLM_MODEL", "deepseek-chat"))
-        return AgenteFrota(llm, "data/frota.duckdb"), False
-    return AgenteFrota(LLMDemonstracao(), "data/frota.duckdb", gerar_resumo=False), True
+        return AgenteFrota(llm), False
+    return AgenteFrota(LLMDemonstracao(), gerar_resumo=False), True
 
 
 def desenhar_grafico(r: Resposta) -> None:

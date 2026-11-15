@@ -15,10 +15,11 @@ from datetime import datetime
 from pathlib import Path
 
 from fleet_analyst.agente import AgenteFrota, cliente_openai
+from fleet_analyst.dados import CAMINHO_BASE
 from fleet_analyst.avaliacao import carregar_perguntas, resultados_equivalentes
 
 RAIZ = Path(__file__).resolve().parent.parent
-BASE = RAIZ / "data" / "frota.duckdb"
+BASE = CAMINHO_BASE
 
 
 def _carregar_env() -> None:
